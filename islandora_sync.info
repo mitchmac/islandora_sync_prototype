@@ -1,0 +1,6 @@
+name = Islandora Sync
+description = Tight integration of Fedora Commons and Drupal.
+core = 7.x
+files[] = islandora_sync.module
+
+dependencies[] = node

@@ -1,0 +1,137 @@
+<?php
+
+function islandora_sync_menu() {
+  //$items['admin/structure/types/manage/%node_type/islandora'] = array(
+  $items['admin/islandora/node_sync'] = array(
+    'title' => 'Node sync',
+    'page callback' => 'islandora_sync_page',
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/islandora/node_sync/%node_type'] = array(
+    'title' => 'Node sync settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_sync_nodetype_settings_form', 3),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/islandora/node_sync/%node_type/fields'] = array(
+    'title' => 'Node sync fields',
+    'page callback' => 'islandora_sync_nodetype_fields',
+    'page arguments' => array(3),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/islandora/node_sync/%node_type/fields/%'] = array(
+    'title' => 'Node sync fields mapping',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('islandora_sync_field_mapping_form', 3, 5),
+    'access arguments' => array('administer content types'),
+    'type' => MENU_LOCAL_TASK,
+  );
+  return $items;
+}
+
+function islandora_sync_form_alter(&$form, &$form_state, $form_id) {
+  //dpm($form_id);
+  //$type_url_str = str_replace('_', '-', $type->type);
+}
+
+function islandora_sync_page() {
+  $types = node_type_get_types();
+  $names = node_type_get_names();
+
+  $table = array();
+  $table['header'] = array(t('Node Type'), array('data' => t('Operations'), 'colspan' => 2));
+  foreach ($names AS $key => $name) {
+    $type = $types[$key];
+    $type_url_str = str_replace('_', '-', $type->type);
+
+    $table['rows'][]  = array(check_plain($name), l(t('Settings'), 'admin/islandora/node_sync/' . $type_url_str), l(t('Fields'), 'admin/islandora/node_sync/' . $type_url_str . '/fields'));
+  }
+
+  return array('#markup' => theme('table', $table));
+}
+
+function islandora_sync_nodetype_setttings_form($form, &$form_state, $type) {
+  $type_name = str_replace('-', '_', $type->type);
+  $form = array();
+
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => $type_name,
+  );
+
+  $form['sync_fedora'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Sync nodes to Fedora'),
+  );
+
+  $form['cmodel'] = array(
+    '#type' => 'select',
+    '#title' => t('Content model'),
+    '#description' => t('The content models that this node type should be mapped to.'),
+    '#options' => array(
+      0 => t('Cmodel 1'),
+      1 => t('Cmodel 2'),
+    ),
+    '#multiple' => TRUE,
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="sync_fedora"]' => array('checked' => FALSE)),
+      ),
+  );
+
+  $form['sync_drupal'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Sync objects to Drupal'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  return $form;
+}
+
+function islandora_sync_nodetype_fields($type) {
+  $type_name = str_replace('-', '_', $type->type);
+  $instances = field_info_instances('node', $type_name);
+  $instances += field_info_extra_fields('node', $type_name, 'form');
+
+  $table = array();
+  $table['header'] = array(t('Label'), t('Name'), t('Mapping'));
+
+  foreach ($instances AS $name => $instance) {
+    $table['rows'][] = array(check_plain($instance['label']), check_plain($name), l(t('Map to Fedora'), 'admin/islandora/node_sync/' . $type->type . '/fields/' . $name ));
+  }
+
+  return array('#markup' => theme('table', $table));
+}
+
+function islandora_sync_field_mapping_form($form, &$form_state, $type, $field) {
+  $form = array();
+
+  $form['type'] = array(
+    '#type' => 'value',
+    '#value' => $type,
+  );
+
+  $form['field'] = array(
+    '#type' => 'value',
+  );
+
+  $form['datastream'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Datastream'),
+    '#description' => t('Which datastream should this value be mapped to.'),
+  );
+
+  $form['xpath'] = array(
+    '#type' => 'textfield',
+    '#title' => t('XPath'),
+    '#description' => t('If the field value is mapped to an XML record, define an XPath expression for the field.'),
+  );
+
+  return $form;
+}

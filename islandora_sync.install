@@ -1,0 +1,33 @@
+<?php
+
+function islandora_sync_schema() {
+  $schema['islandora_sync_field_map'] = array(
+    'description' => '',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'description' => '',
+        'type' => 'varchar',
+        'length' => 128,
+
+      ),
+      'bundle' => array(
+
+      ),
+      'field' => array(
+
+      ),
+      'dsid' => array(
+
+      ),
+      'xpath' => array(
+
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  return $schema;
+}
