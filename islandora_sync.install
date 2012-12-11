@@ -9,22 +9,27 @@ function islandora_sync_schema() {
         'not null' => TRUE,
       ),
       'entity_type' => array(
-        'description' => '',
         'type' => 'varchar',
         'length' => 128,
-
+        'not null' => TRUE,
       ),
       'bundle' => array(
-
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
       ),
       'field' => array(
-
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
       ),
       'dsid' => array(
-
+        'type' => 'varchar',
+        'length' => 128,
       ),
       'xpath' => array(
-
+        'type' => 'varchar',
+        'length' => 128,
       ),
     ),
     'primary key' => array('id'),
