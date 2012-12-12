@@ -34,6 +34,53 @@ function islandora_sync_schema() {
     ),
     'primary key' => array('id'),
   );
+  $schema['islandora_sync_type_settings'] = array(
+    'description' => '',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+      ),
+      'bundle' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+      ),
+      'sync_fedora' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sync_drupal' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('id'),
+  );
+  $schema['islandora_sync_type_cmodel'] = array(
+    'description' => '',
+    'fields' => array(
+      'id' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'not null' => 'true',
+      ),
+      'cmodel' => array(
+        'type' => 'varchar',
+        'length' => 128,
+      )
+    ),
+  );
+
   $schema['islandora_sync_state'] = array(
     'description' => '',
     'fields' => array(
