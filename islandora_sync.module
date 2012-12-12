@@ -86,7 +86,7 @@ function islandora_sync_page() {
   return array('#markup' => theme('table', $table));
 }
 
-function islandora_sync_nodetype_setttings_form($form, &$form_state, $type) {
+function islandora_sync_nodetype_settings_form($form, &$form_state, $type) {
   $type_name = str_replace('-', '_', $type->type);
   $form = array();
 
