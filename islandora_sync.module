@@ -54,6 +54,8 @@ function islandora_sync_track_state($node, $operation) {
 }
 
 function islandora_sync_cron() {
+
+  // Create new fedora objects
   // If sync to fedora
   $new_nodes = db_query("SELECT * FROM {islandora_sync_state} WHERE pid IS NULL")->fetchAll();
   foreach ($new_nodes AS $node_state) {
@@ -65,6 +67,38 @@ function islandora_sync_cron() {
 
     watchdog('islandora_sync', 'Created object: ' . $object_id);
   }
+
+  // Create new drupal nodes
+
+  // find cmodels that are mapped to content types
+
+  $cmodels = db_query("SELECT * FROM {islandora_sync_type_cmodel}")->fetchAll();
+}
+
+function islandora_sync_get_unsync_objects($cmodels) {
+  module_load_include('inc', 'islandora', 'includes/tuque');
+
+  $connection = new IslandoraTuque();
+
+  $query = 'select $object  $model from <#ri>
+  where (walk($model <fedora-model:hasModel><info:fedora/fedora-system:ContentModel-3.0>
+  and $model <fedora-model:hasModel> $object))
+  minus $object <mulgara:is><info:fedora/fedora-system:FedoraObject-3.0>
+  minus $object <mulgara:is><info:fedora/fedora-system:ContentModel-3.0>
+  minus $object <mulgara:is><info:fedora/fedora-system:ServiceDefinition-3.0>
+  minus $object <mulgara:is><info:fedora/fedora-system:ServiceDeployment-3.0>
+  order by $object';
+
+  $results = $connection->repository->ri->itqlQuery($query);
+
+  $content_models = array();
+  foreach ($results as $model) {
+    $content_models[] = $model['object']['value'];
+  }
+  $content_models = array_unique($content_models);
+  $content_models = array_values($content_models);
+
+  return $content_models;
 }
 
 function islandora_sync_create_fedora_object($entity_id) {
@@ -83,7 +117,7 @@ function islandora_sync_create_fedora_object($entity_id) {
     // Properly set creator, etc
     $user = user_load($node->uid);
     $object->owner = $user->name;
-    
+
     $object = islandora_add_object($object);
 
     // Update state tracking table
