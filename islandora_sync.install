@@ -34,5 +34,38 @@ function islandora_sync_schema() {
     ),
     'primary key' => array('id'),
   );
+  $schema['islandora_sync_state'] = array(
+    'description' => '',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+      ),
+      'entity_id' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+      ),
+      'pid' => array(
+        'type' => 'varchar',
+        'length' => 128,
+      ),
+      'event_time' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+      ),
+      'event' => array(
+        'type' => 'varchar',
+        'length' => 128
+      ),
+      'last_process_time' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+      )
+    ),
+    'primary key' => array('id'),
+  );
   return $schema;
 }
