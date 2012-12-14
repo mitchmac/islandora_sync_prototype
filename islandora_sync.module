@@ -43,10 +43,11 @@ function islandora_sync_node_update($node) {
 function islandora_sync_track_state($node, $operation) {
   $record['entity_id'] = $node->nid;
   $record['time'] = time();
-  
+
+  //@TODO: this sucks
   if ($operation == 'insert') {
     $record['event'] = 'insert';
-    drupal_write_record('islandora_sync_state', $record);
+   // drupal_write_record('islandora_sync_state', $record);
   }
   else {
     
@@ -73,32 +74,61 @@ function islandora_sync_cron() {
   // find cmodels that are mapped to content types
 
   $cmodels = db_query("SELECT * FROM {islandora_sync_type_cmodel}")->fetchAll();
+
+  foreach ($cmodels AS $cmodel) {
+    $objects = islandora_sync_get_unsync_objects($cmodel->cmodel);  //@TODO: single query for all cmodels?
+
+    foreach ($objects AS $object_id) {
+      // ensure object hasn't already been imported
+      $object = islandora_object_load($object_id);
+
+      // get proper content type based on cmodel
+      // find proper node owner
+
+      $node = new stdClass();
+      $node->type = 'page';
+      node_object_prepare($node);
+
+      $node->title = check_plain($object->label);
+      $node->language = LANGUAGE_NONE;
+
+      node_save($node);
+
+      $record['entity_id'] = $node->nid;
+      $record['pid'] = $object_id;
+      $record['event_time'] = time();
+      $record['event'] = 'created';
+
+      drupal_write_record('islandora_sync_state', $record);
+
+      // update rels-ext
+      $object->relationships->add(ISLANDORA_RELS_EXT_URI, 'drupalEntity', $node->nid, TRUE);
+
+    }
+  }
 }
 
-function islandora_sync_get_unsync_objects($cmodels) {
+function islandora_sync_get_unsync_objects($cmodel) {
   module_load_include('inc', 'islandora', 'includes/tuque');
 
   $connection = new IslandoraTuque();
 
-  $query = 'select $object  $model from <#ri>
-  where (walk($model <fedora-model:hasModel><info:fedora/fedora-system:ContentModel-3.0>
-  and $model <fedora-model:hasModel> $object))
-  minus $object <mulgara:is><info:fedora/fedora-system:FedoraObject-3.0>
-  minus $object <mulgara:is><info:fedora/fedora-system:ContentModel-3.0>
-  minus $object <mulgara:is><info:fedora/fedora-system:ServiceDefinition-3.0>
-  minus $object <mulgara:is><info:fedora/fedora-system:ServiceDeployment-3.0>
+  $query = 'select $object  from <#ri>
+  where $object<fedora-model:hasModel> <info:fedora/' . $cmodel . '>
+  and $object <fedora-model:state> <info:fedora/fedora-system:def/model#Active>
+  minus $object <http://islandora.ca/ontology/relsext#drupalEntity> $entity
   order by $object';
 
   $results = $connection->repository->ri->itqlQuery($query);
 
-  $content_models = array();
+  $objects = array();
   foreach ($results as $model) {
     $content_models[] = $model['object']['value'];
   }
-  $content_models = array_unique($content_models);
-  $content_models = array_values($content_models);
+  $objects = array_unique($content_models);
+  $objects = array_values($content_models);
 
-  return $content_models;
+  return $objects;
 }
 
 function islandora_sync_create_fedora_object($entity_id) {
